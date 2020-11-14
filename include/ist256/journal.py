@@ -32,8 +32,8 @@ class Journal:
         self.__netid__ = self.get_netid()
         self.__notebook__ = self.get_notebook_path()
         self.__notebook_full_path__ = f"{os.environ.get('HOME')}/{self.__notebook__}"
-        self.__course__, self.__term__, self.__unit__, self.__assignment__, self.__assignment_type__ = self.parse_notebook_path()
-        self.__bucket__ = f"{self.__course__}-{self.__term__}"
+        #self.__course__, self.__term__, self.__unit__, self.__assignment__, self.__assignment_type__ = self.parse_notebook_path()
+        self.__bucket__ = f"{os.environ['BUCKET']}"
   
         self.initialize_bucket()
 
