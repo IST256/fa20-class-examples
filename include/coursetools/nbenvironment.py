@@ -13,6 +13,9 @@ class NbEnvironment(object):
         self.__course = self.__find_course()
         self.__git_folder = self.__find_git_folder()
         self.__bucket = self.__find_bucket()
+        self.__filename = self.__find_filename()
+        self.__lesson = self.__find_lesson()
+        
 
     @property
     def properties(self):
@@ -48,6 +51,15 @@ class NbEnvironment(object):
     def bucket(self):
         return self.__bucket
     
+    @property
+    def filename(self):
+        return self.__filename
+    
+    @property
+    def lesson(self):
+        return self.__lesson
+    
+    
     def __load_settings(self):
         if os.path.exists(".settings"):
             with open(".settings","r") as f:
@@ -61,18 +73,27 @@ class NbEnvironment(object):
             
     def __find_git_folder(self):
         items = self.__notebook_path.split('/')
-        if len(items) > 3 and items[0] == 'library':
+        if len(items) >= 3 and items[0] == 'library':
             return self.__settings.get('git-folder',items[2])
         else:
             raise Error('This notebook file is not in a git folder under the course folder.')
+
+    def __find_lesson(self):
+        items = self.__notebook_path.split('/')
+        if len(items) >= 4 and items[0] == 'library':
+            return items[-2]
+                
+    def __find_filename(self):
+        items = self.__notebook_path.split('/')
+        if len(items) >= 4 and items[0] == 'library':
+            return items[-1]
     
     def __find_course(self):
         items = self.__notebook_path.split('/')
-        if len(items) > 2 and items[0] == 'library':
+        if len(items) >= 2 and items[0] == 'library':
             return items[1]
         else:
             raise Error('This notebook file must be in a course folder.')
-            
             
     def __find_service_prefix(self):
         return os.environ.get('JUPYTERHUB_SERVICE_PREFIX')
