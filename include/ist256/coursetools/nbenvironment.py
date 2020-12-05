@@ -2,6 +2,9 @@ import os
 import ipykernel
 import requests 
 import json
+import datetime
+from datetime import datetime, timezone
+from .minioclient import MinioClient
 
 class NbEnvironment(object):
     
@@ -15,7 +18,12 @@ class NbEnvironment(object):
         self.__bucket = self.__find_bucket()
         self.__filename = self.__find_filename()
         self.__lesson = self.__find_lesson()
+        self.__filespec = self.__find_filespec()
+        self.__run_datetime = datetime.now()
         
+        # minio
+        self.__minio_client = MinioClient()
+    
 
     @property
     def properties(self):
@@ -59,6 +67,14 @@ class NbEnvironment(object):
     def lesson(self):
         return self.__lesson
     
+    @property
+    def filespec(self):
+        return self.__filespec
+    
+    @property 
+    def run_datetime(self):
+        return self.__run_datetime
+    
     
     def __load_settings(self):
         if os.path.exists(".settings"):
@@ -68,6 +84,9 @@ class NbEnvironment(object):
         else:
             return {}
 
+    def __find_filespec(self):
+        return f"{os.environ.get('HOME')}/{self.__notebook_path}"
+        
     def __find_bucket(self):
         return f"{self.__course}-{self.__git_folder}"
             
@@ -116,3 +135,6 @@ class NbEnvironment(object):
         for sess in sessions:
             if sess['kernel']['id'] == kernel_id:
                 return sess['notebook']['path']
+
+            
+        
