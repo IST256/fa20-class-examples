@@ -4,12 +4,19 @@ import requests
 import json
 import datetime
 from datetime import datetime, timezone
+import time
 from .minioclient import MinioClient
+from .settings import Settings
 
 class NbEnvironment(object):
     
     def __init__(self):
-        self.__settings = self.__load_settings()
+
+        # compositions
+        self.__minio_client = MinioClient()
+        self.__settings = Settings().load()
+        
+        # properties
         self.__netid = self.__find_netid()
         self.__notebook_path = self.__find_notebook_path()
         self.__service_prefix = self.__find_service_prefix()
@@ -19,12 +26,17 @@ class NbEnvironment(object):
         self.__filename = self.__find_filename()
         self.__lesson = self.__find_lesson()
         self.__filespec = self.__find_filespec()
-        self.__run_datetime = datetime.now()
+        self.__run_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
         
-        # minio
-        self.__minio_client = MinioClient()
-    
+        # timezone
+        self.__set_timezone("America/New_York")
 
+    def __set_timezone(self, tz_string):
+        self.__timezone = tz_string
+        os.environ['TZ'] = self.__timezone
+        time.tzset()
+        
+    
     @property
     def properties(self):
         '''
@@ -34,7 +46,15 @@ class NbEnvironment(object):
         for key in self.__dict__.keys():
             tmp[key.replace('_NbEnvironment__','')] = self.__dict__[key]
         return tmp
-        
+
+    @property
+    def timezone(self):
+        return self.__timezone
+    
+    @property 
+    def settings(self):
+        return self.__settings
+    
     @property 
     def netid(self):
         return self.__netid
@@ -76,13 +96,6 @@ class NbEnvironment(object):
         return self.__run_datetime
     
     
-    def __load_settings(self):
-        if os.path.exists(".settings"):
-            with open(".settings","r") as f:
-                settings = json.load(f)
-                return settings
-        else:
-            return {}
 
     def __find_filespec(self):
         return f"{os.environ.get('HOME')}/{self.__notebook_path}"
