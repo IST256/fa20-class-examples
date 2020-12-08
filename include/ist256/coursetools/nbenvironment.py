@@ -34,11 +34,13 @@ class NbEnvironment(object):
         self.__set_timezone("America/New_York")
 
         # roster
-        self.__roster = self.__load_roster()
-        self.__assignments = self.__load_assignments()
+        self.__roster_df = self.__load_roster()
+        self.__assignments_df = self.__load_assignments()
         
         self.__is_student = self.__find_student()
         self.__is_instructor = self.__find_instructor()
+        
+        self.__assignment = self.__find_assignment()
     
     
         
@@ -69,8 +71,13 @@ class NbEnvironment(object):
         '''
         tmp = {}
         for key in self.__dict__.keys():
-            tmp[key.replace('_NbEnvironment__','')] = self.__dict__[key]
+            if not key.endswith("_df"):
+                tmp[key.replace('_NbEnvironment__','')] = self.__dict__[key]
         return tmp
+    
+    @property
+    def assignment(self):
+        return self.__assignment
 
     @property
     def is_instructor(self):
@@ -126,23 +133,34 @@ class NbEnvironment(object):
     @property 
     def run_datetime(self):
         return self.__run_datetime
-    
-    
+        
     def __find_student(self):
-        self.__netid
-        for val in self.__roster['student_netid'].values:
-            if val == self.__netid:
-                return True
-        return False 
+        return self.__find_in_dataframe(dataframe=self.__roster_df, column_number=0, value=self.__netid)
 
     def __find_instructor(self):
-        self.__netid
-        for val in self.__roster['instructor_netid'].values:
-            if val == self.__netid:
+        return self.__find_in_dataframe(dataframe=self.__roster_df, column_number=1, value=self.__netid)
+    
+    def __find_in_dataframe(self, dataframe, column_number, value):
+        for val in dataframe.iloc[:,column_number].values:
+            if val == value:
                 return True
         return False 
+        
+    def __find_assignment(self):
+        result = {}
+        lesson_column = self.__assignments_df.columns[0]
+        assignment_column = self.__assignments_df.columns[1]
+        search = self.__assignments_df[ (self.__assignments_df[lesson_column] ==  self.__lesson) & (self.__assignments_df[assignment_column] == self.__filename)]
+        if len(search)!=1: return result
+        row = search.iloc[0].to_list()
+        result['lesson_folder'] = row[0]
+        result['filename'] = row[1]
+        result['total_points'] = row[2]
+        result['gradebook_column'] = row[3]
+        result['name'] = row[3].split('|')[0]
+        result['duedate'] = row[4]
+        return result 
     
-
     def __find_filespec(self):
         return f"{os.environ.get('HOME')}/{self.__notebook_path}"
         
@@ -195,5 +213,3 @@ class NbEnvironment(object):
             if sess['kernel']['id'] == kernel_id:
                 return sess['notebook']['path']
 
-            
-        
