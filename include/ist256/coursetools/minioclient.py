@@ -32,13 +32,13 @@ class MinioClient(object):
             return etag
     
     def get(self, bucket_name, remote_filespec):
-        self.__mc.get_object(bucket_name, remote_filespec)        
+        return self.__mc.get_object(bucket_name, remote_filespec)        
         
     def fput(self,bucket_name,local_filespec, remote_filespec):
-            etag = self.__mc.fput_object(bucket_name, remote_filespec, local_filespec)
-            return etag
+        etag = self.__mc.fput_object(bucket_name, remote_filespec, local_filespec)
+        return etag
         
     def fget(self,bucket_name,remote_filespec, local_filespec):
-            info = self.__mc.fget_object(bucket_name, remote_filespec, local_filespec)
-            return info
+        info = self.__mc.fget_object(bucket_name, remote_filespec, local_filespec)
+        return info
         

@@ -5,6 +5,7 @@ import json
 import datetime
 from datetime import datetime, timezone
 import time
+import pandas as pd
 from .minioclient import MinioClient
 from .settings import Settings
 
@@ -15,6 +16,7 @@ class NbEnvironment(object):
         # compositions
         self.__minio_client = MinioClient()
         self.__settings = Settings().load()
+
         
         # properties
         self.__netid = self.__find_netid()
@@ -31,12 +33,35 @@ class NbEnvironment(object):
         # timezone
         self.__set_timezone("America/New_York")
 
+        # roster
+        self.__roster = self.__load_roster()
+        self.__assignments = self.__load_assignments()
+        
+        self.__is_student = self.__find_student()
+        self.__is_instructor = self.__find_instructor()
+    
+    
+        
+
+    def __load_roster(self):
+        roster_url='metadata/roster.csv'
+        data = self.__minio_client.get(self.__bucket, roster_url )
+        roster = pd.read_csv(data)
+        # check columns student_netid instructor_netid
+        return roster
+
+    def __load_assignments(self):
+        roster_url='metadata/assignments.csv'
+        data = self.__minio_client.get(self.__bucket, roster_url )
+        assignments = pd.read_csv(data)
+        return assignments
+
     def __set_timezone(self, tz_string):
         self.__timezone = tz_string
         os.environ['TZ'] = self.__timezone
         time.tzset()
         
-    
+
     @property
     def properties(self):
         '''
@@ -47,6 +72,13 @@ class NbEnvironment(object):
             tmp[key.replace('_NbEnvironment__','')] = self.__dict__[key]
         return tmp
 
+    @property
+    def is_instructor(self):
+        return self.__is_instructor
+    
+    @property
+    def is_student(self):
+        return self.__is_student
     @property
     def timezone(self):
         return self.__timezone
@@ -95,6 +127,20 @@ class NbEnvironment(object):
     def run_datetime(self):
         return self.__run_datetime
     
+    
+    def __find_student(self):
+        self.__netid
+        for val in self.__roster['student_netid'].values:
+            if val == self.__netid:
+                return True
+        return False 
+
+    def __find_instructor(self):
+        self.__netid
+        for val in self.__roster['instructor_netid'].values:
+            if val == self.__netid:
+                return True
+        return False 
     
 
     def __find_filespec(self):
